@@ -252,6 +252,7 @@ function Dashboard() {
   const [activeTask, setActiveTask] = useState(null);
   const [activeNav, setActiveNav] = useState('dashboard');
   const [accountOpen, setAccountOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
@@ -324,6 +325,61 @@ function Dashboard() {
           .includes(email),
       ).length,
     };
+  }, [tasks, user.email, user.uid]);
+
+  const dashboardNotifications = useMemo(() => {
+    const email = user.email?.toLowerCase() || '';
+    const adminEmails = getAdminEmails();
+    const items = [];
+
+    tasks.forEach((task) => {
+      const creatorEmail = task.created_by_email || 'Unknown user';
+      const creatorIsAdmin = adminEmails.includes(creatorEmail.toLowerCase());
+      const assignedToMe = task.assigned_to?.toLowerCase() === email;
+      const sharedWithMe = task.shared_with
+        ?.split(',')
+        .map((item) => item.trim().toLowerCase())
+        .includes(email);
+      const createdByMe = task.created_by === user.uid;
+
+      if (assignedToMe && !createdByMe) {
+        items.push({
+          id: `assigned-${task.id}`,
+          title: creatorIsAdmin ? 'Admin assigned you a task' : 'Task assigned to you',
+          body: `${task.title} from ${creatorEmail}`,
+          tone: 'info',
+        });
+      }
+
+      if (sharedWithMe && !assignedToMe && !createdByMe) {
+        items.push({
+          id: `shared-${task.id}`,
+          title: creatorIsAdmin ? 'Admin shared a task with you' : 'Task shared with you',
+          body: `${task.title} from ${creatorEmail}`,
+          tone: 'info',
+        });
+      }
+
+      if (isDueSoon(task)) {
+        items.push({
+          id: `due-${task.id}`,
+          title: 'Task due soon',
+          body: `${task.title} is due ${formatDate(task.deadline)}`,
+          tone: 'warning',
+        });
+      }
+
+      if (isOverdue(task)) {
+        items.push({
+          id: `overdue-${task.id}`,
+          title: 'Task overdue',
+          body: `${task.title} was due ${formatDate(task.deadline)}`,
+          tone: 'danger',
+        });
+      }
+    });
+
+    return items;
   }, [tasks, user.email, user.uid]);
 
   const filteredTasks = useMemo(() => {
@@ -451,9 +507,25 @@ function Dashboard() {
               <h2 className="mt-1 text-2xl font-bold">Staff productivity dashboard</h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              <IconButton label="Request task reminder notifications" onClick={handleNotificationPermission}>
-                <Bell size={20} />
-              </IconButton>
+              <div className="relative">
+                <IconButton
+                  label="View dashboard notifications"
+                  onClick={() => setNotificationOpen((current) => !current)}
+                >
+                  <Bell size={20} />
+                </IconButton>
+                {dashboardNotifications.length > 0 && (
+                  <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-redbrand px-1 text-xs font-bold text-white">
+                    {dashboardNotifications.length}
+                  </span>
+                )}
+                {notificationOpen && (
+                  <NotificationPanel
+                    notifications={dashboardNotifications}
+                    onEnableBrowserNotifications={handleNotificationPermission}
+                  />
+                )}
+              </div>
               <button className="btn-secondary" onClick={logout}>
                 <LogOut size={18} aria-hidden="true" />
                 Logout
@@ -919,6 +991,50 @@ function MiniStat({ label, value }) {
     <div className="rounded-lg border border-navy/10 p-4">
       <p className="text-sm font-medium text-navy/60">{label}</p>
       <p className="mt-1 text-2xl font-bold">{value}</p>
+    </div>
+  );
+}
+
+function NotificationPanel({ notifications, onEnableBrowserNotifications }) {
+  return (
+    <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-lg bg-white p-4 text-navy shadow-soft ring-1 ring-navy/15">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">Notifications</p>
+          <p className="mt-1 text-sm text-navy/60">Assignments, shared work, and deadline alerts.</p>
+        </div>
+        <button
+          type="button"
+          className="rounded-md px-2 py-1 text-xs font-semibold text-redbrand hover:bg-redbrand/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-redbrand"
+          onClick={onEnableBrowserNotifications}
+        >
+          Enable browser
+        </button>
+      </div>
+
+      <div className="mt-4 max-h-80 space-y-3 overflow-y-auto">
+        {notifications.length ? (
+          notifications.map((item) => (
+            <div
+              key={item.id}
+              className={`rounded-lg border p-3 ${
+                item.tone === 'danger'
+                  ? 'border-redbrand/25 bg-redbrand/10'
+                  : item.tone === 'warning'
+                    ? 'border-amber-300 bg-amber-50'
+                    : 'border-navy/10 bg-white'
+              }`}
+            >
+              <p className="text-sm font-semibold">{item.title}</p>
+              <p className="mt-1 text-sm text-navy/65">{item.body}</p>
+            </div>
+          ))
+        ) : (
+          <p className="rounded-lg border border-dashed border-navy/20 p-4 text-sm text-navy/65">
+            No notifications yet. Tasks assigned or shared with you will appear here.
+          </p>
+        )}
+      </div>
     </div>
   );
 }
