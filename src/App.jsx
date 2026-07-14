@@ -105,8 +105,8 @@ function AuthScreen() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [form, setForm] = useState({
     name: '',
-    email: 'admin@example.com',
-    password: 'password123',
+    email: '',
+    password: '',
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -114,6 +114,17 @@ function AuthScreen() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError('');
+
+    if (!form.email.trim() || !form.password.trim()) {
+      setError('Email and password are required.');
+      return;
+    }
+
+    if (isRegistering && !form.name.trim()) {
+      setError('Full name is required to create an account.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -181,6 +192,8 @@ function AuthScreen() {
                 label="Full name"
                 value={form.name}
                 onChange={(value) => setForm({ ...form, name: value })}
+                placeholder="Enter your full name"
+                autoComplete="name"
                 required
               />
             )}
@@ -190,6 +203,8 @@ function AuthScreen() {
               type="email"
               value={form.email}
               onChange={(value) => setForm({ ...form, email: value })}
+              placeholder="Enter your email address"
+              autoComplete="email"
               required
             />
             <TextInput
@@ -198,6 +213,8 @@ function AuthScreen() {
               type="password"
               value={form.password}
               onChange={(value) => setForm({ ...form, password: value })}
+              placeholder="Enter your password"
+              autoComplete={isRegistering ? 'new-password' : 'current-password'}
               minLength={6}
               required
             />
