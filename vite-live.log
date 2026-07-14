@@ -3,26 +3,22 @@
 > vite --host 127.0.0.1 --port 5175 --strictPort
 
 
-  [32m[1mVITE[22m v6.4.3[39m  [2mready in [0m[1m617[22m[2m[0m ms[22m
+  [32m[1mVITE[22m v6.4.3[39m  [2mready in [0m[1m843[22m[2m[0m ms[22m
 
   [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5175[22m/[39m
-[2m9:14:54 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/styles.css[22m
-[2m9:27:15 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m9:27:15 PM[22m [36m[1m[vite][22m[39m server restarted.
-[2m9:27:16 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m9:27:16 PM[22m [36m[1m[vite][22m[39m server restarted.
-[2m9:27:47 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m9:27:47 PM[22m [36m[1m[vite][22m[39m server restarted.
-[2m9:27:49 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m9:27:49 PM[22m [36m[1m[vite][22m[39m server restarted.
-[2m9:28:44 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m9:28:44 PM[22m [36m[1m[vite][22m[39m server restarted.
-[2m9:28:47 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m9:28:47 PM[22m [36m[1m[vite][22m[39m server restarted.
-[2m9:28:54 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m9:28:54 PM[22m [36m[1m[vite][22m[39m server restarted.
-[2m9:28:56 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m9:28:56 PM[22m [36m[1m[vite][22m[39m server restarted.
-[2m10:14:13 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m10:14:13 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
-[2m10:14:14 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m10:47:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/styles.css[22m
+[2m10:47:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/lib/firebase.js[22m
+[2m10:47:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/styles.css, /src/App.jsx[22m
+[2m10:47:43 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/styles.css[22m
+[2m10:50:52 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m10:50:52 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m10:50:55 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m10:50:55 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m10:50:59 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m10:50:59 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m10:51:00 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m10:51:00 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m10:51:03 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m10:51:04 PM[22m [36m[1m[vite][22m[39m server restarted.
+[2m10:51:05 PM[22m [36m[1m[vite][22m[39m [32m.env changed, restarting server...[39m
+[2m10:51:05 PM[22m [36m[1m[vite][22m[39m server restarted.

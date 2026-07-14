@@ -19,6 +19,7 @@ import {
 import { useAuth } from './context/AuthContext';
 import { isFirebaseConfigured } from './lib/firebase';
 import { isSupabaseConfigured } from './lib/supabase';
+import { getEnvValue } from './lib/env';
 import { deleteTask, fetchTasks, saveTask, subscribeToTasks } from './services/taskService';
 
 const emptyTask = {
@@ -47,7 +48,7 @@ const statusLabels = {
 };
 
 function getAdminEmails() {
-  return (import.meta.env.VITE_ADMIN_EMAILS || '')
+  return getEnvValue('VITE_ADMIN_EMAILS')
     .split(',')
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean);
