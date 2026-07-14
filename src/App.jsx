@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   BarChart3,
@@ -233,12 +233,18 @@ function Dashboard() {
   const { user, logout, authMode } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [activeTask, setActiveTask] = useState(null);
+  const [activeNav, setActiveNav] = useState('dashboard');
+  const [accountOpen, setAccountOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [loadingTasks, setLoadingTasks] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
+  const dashboardRef = useRef(null);
+  const tasksRef = useRef(null);
+  const collaborationRef = useRef(null);
+  const staffRef = useRef(null);
 
   const isAdmin = getAdminEmails().includes(user.email?.toLowerCase());
 
@@ -284,6 +290,25 @@ function Dashboard() {
     return { total: tasks.length, completed, overdue, dueSoon };
   }, [tasks]);
 
+  const collaborativeTasks = useMemo(
+    () => tasks.filter((task) => task.assigned_to || task.shared_with),
+    [tasks],
+  );
+
+  const staffStats = useMemo(() => {
+    const email = user.email?.toLowerCase() || '';
+    return {
+      createdByMe: tasks.filter((task) => task.created_by === user.uid).length,
+      assignedToMe: tasks.filter((task) => task.assigned_to?.toLowerCase() === email).length,
+      sharedWithMe: tasks.filter((task) =>
+        task.shared_with
+          ?.split(',')
+          .map((item) => item.trim().toLowerCase())
+          .includes(email),
+      ).length,
+    };
+  }, [tasks, user.email, user.uid]);
+
   const filteredTasks = useMemo(() => {
     const searchValue = query.trim().toLowerCase();
     return tasks.filter((task) => {
@@ -311,6 +336,17 @@ function Dashboard() {
     }
   }
 
+  function handleNavSelect(section) {
+    const targets = {
+      dashboard: dashboardRef,
+      tasks: tasksRef,
+      collaboration: collaborationRef,
+      staff: staffRef,
+    };
+    setActiveNav(section);
+    targets[section]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   async function handleNotificationPermission() {
     if (!('Notification' in window)) {
       setToast('This browser does not support desktop notifications.');
@@ -336,19 +372,57 @@ function Dashboard() {
           </div>
 
           <nav className="mt-8 space-y-2" aria-label="Dashboard">
-            <NavItem icon={<BarChart3 size={18} />} label="Dashboard" active />
-            <NavItem icon={<CheckCircle2 size={18} />} label="Tasks" />
-            <NavItem icon={<Users size={18} />} label="Collaboration" />
-            <NavItem icon={<ShieldCheck size={18} />} label={isAdmin ? 'Admin enabled' : 'Staff view'} />
+            <NavItem
+              icon={<BarChart3 size={18} />}
+              label="Dashboard"
+              active={activeNav === 'dashboard'}
+              onClick={() => handleNavSelect('dashboard')}
+            />
+            <NavItem
+              icon={<CheckCircle2 size={18} />}
+              label="Tasks"
+              active={activeNav === 'tasks'}
+              onClick={() => handleNavSelect('tasks')}
+            />
+            <NavItem
+              icon={<Users size={18} />}
+              label="Collaboration"
+              active={activeNav === 'collaboration'}
+              onClick={() => handleNavSelect('collaboration')}
+            />
+            <NavItem
+              icon={<ShieldCheck size={18} />}
+              label={isAdmin ? 'Admin enabled' : 'Staff view'}
+              active={activeNav === 'staff'}
+              onClick={() => handleNavSelect('staff')}
+            />
           </nav>
 
-          <div className="mt-8 rounded-lg bg-white/8 p-4 ring-1 ring-white/10">
+          <button
+            type="button"
+            className="mt-8 w-full rounded-lg bg-white/8 p-4 text-left ring-1 ring-white/10 transition hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            aria-expanded={accountOpen}
+            onClick={() => setAccountOpen((current) => !current)}
+          >
             <p className="text-sm font-semibold">{user.displayName || user.email}</p>
             <p className="mt-1 break-words text-sm text-white/75">{user.email}</p>
             <p className="mt-3 text-xs uppercase tracking-wide text-red-100">
               {authMode === 'firebase' ? 'Firebase authentication' : 'Local demo authentication'}
             </p>
-          </div>
+          </button>
+
+          {accountOpen && (
+            <div className="mt-3 rounded-lg bg-white p-4 text-navy shadow-soft">
+              <p className="text-sm font-semibold">Account</p>
+              <p className="mt-1 text-sm text-navy/70">
+                {isAdmin ? 'Admin reporting access is enabled.' : 'Staff access is enabled.'}
+              </p>
+              <button className="btn-secondary mt-4 w-full justify-center" onClick={logout}>
+                <LogOut size={18} aria-hidden="true" />
+                Logout
+              </button>
+            </div>
+          )}
         </aside>
 
         <section className="min-w-0">
@@ -396,14 +470,28 @@ function Dashboard() {
             </div>
           )}
 
-          <section className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Task reporting summary">
+          <section
+            ref={dashboardRef}
+            className="scroll-mt-5 mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            aria-label="Task reporting summary"
+          >
             <StatCard icon={<CheckCircle2 size={20} />} label="Total tasks" value={stats.total} />
             <StatCard icon={<BarChart3 size={20} />} label="Completed" value={stats.completed} />
             <StatCard icon={<Clock3 size={20} />} label="Due in 24h" value={stats.dueSoon} />
             <StatCard icon={<AlertTriangle size={20} />} label="Overdue" value={stats.overdue} danger />
           </section>
 
-          <section className="mt-5 rounded-lg bg-white p-4 shadow-soft ring-1 ring-navy/15">
+          <section ref={tasksRef} className="scroll-mt-5 mt-5 rounded-lg bg-white p-4 shadow-soft ring-1 ring-navy/15">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-redbrand">Tasks</p>
+                <h3 className="text-xl font-bold">Task list</h3>
+              </div>
+              <button className="btn-secondary justify-center" onClick={() => setActiveTask(emptyTask)}>
+                <Plus size={18} aria-hidden="true" />
+                Add task
+              </button>
+            </div>
             <div className="grid gap-3 lg:grid-cols-[1fr_170px_170px]">
               <label className="relative block">
                 <span className="sr-only">Search tasks</span>
@@ -453,6 +541,78 @@ function Dashboard() {
             ) : (
               <EmptyState onCreate={() => setActiveTask(emptyTask)} />
             )}
+          </section>
+
+          <section
+            ref={collaborationRef}
+            className="scroll-mt-5 mt-5 rounded-lg bg-white p-5 shadow-soft ring-1 ring-navy/15"
+            aria-labelledby="collaboration-heading"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-redbrand">Collaboration</p>
+                <h3 id="collaboration-heading" className="text-xl font-bold">
+                  Shared work
+                </h3>
+                <p className="mt-1 text-sm text-navy/70">
+                  Tasks with assignees or collaborators appear here for quick team follow-up.
+                </p>
+              </div>
+              <span className="inline-flex rounded-full bg-redbrand/10 px-3 py-1 text-sm font-semibold text-redbrand ring-1 ring-redbrand/20">
+                {collaborativeTasks.length} active
+              </span>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {collaborativeTasks.length ? (
+                collaborativeTasks.slice(0, 4).map((task) => (
+                  <div key={task.id} className="rounded-lg border border-navy/10 p-4">
+                    <p className="font-semibold">{task.title}</p>
+                    <p className="mt-2 text-sm text-navy/65">
+                      {task.assigned_to ? `Assigned to ${task.assigned_to}` : 'No assignee'}
+                    </p>
+                    {task.shared_with && (
+                      <p className="mt-1 text-sm text-navy/65">Shared with {task.shared_with}</p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="rounded-lg border border-dashed border-navy/20 p-4 text-sm text-navy/65 md:col-span-2">
+                  No collaborative tasks yet. Add an assignee or collaborator on a task to track team work here.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section
+            ref={staffRef}
+            className="scroll-mt-5 mt-5 rounded-lg bg-white p-5 shadow-soft ring-1 ring-navy/15"
+            aria-labelledby="staff-heading"
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-wide text-redbrand">
+                  {isAdmin ? 'Admin enabled' : 'Staff view'}
+                </p>
+                <h3 id="staff-heading" className="text-xl font-bold">
+                  {user.displayName || user.email}
+                </h3>
+                <p className="mt-1 text-sm text-navy/70">
+                  {isAdmin
+                    ? 'You can view reporting data across staff tasks.'
+                    : 'This view summarizes the tasks connected to your account.'}
+                </p>
+              </div>
+              <button className="btn-secondary justify-center" onClick={() => setAccountOpen((current) => !current)}>
+                Account details
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <MiniStat label="Created by you" value={staffStats.createdByMe} />
+              <MiniStat label="Assigned to you" value={staffStats.assignedToMe} />
+              <MiniStat label="Shared with you" value={staffStats.sharedWithMe} />
+            </div>
           </section>
         </section>
       </div>
@@ -721,15 +881,27 @@ function IconButton({ label, onClick, children, danger = false }) {
   );
 }
 
-function NavItem({ icon, label, active = false }) {
+function NavItem({ icon, label, active = false, onClick }) {
   return (
-    <div
-      className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold ${
-        active ? 'bg-white text-navy' : 'text-white/75'
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-h-11 w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+        active ? 'bg-white text-navy shadow-sm' : 'text-white/75 hover:bg-white/10 hover:text-white'
       }`}
+      aria-current={active ? 'page' : undefined}
     >
       {icon}
       {label}
+    </button>
+  );
+}
+
+function MiniStat({ label, value }) {
+  return (
+    <div className="rounded-lg border border-navy/10 p-4">
+      <p className="text-sm font-medium text-navy/60">{label}</p>
+      <p className="mt-1 text-2xl font-bold">{value}</p>
     </div>
   );
 }
